@@ -34,15 +34,15 @@ public:
 
     private:
         Node* current_;
+
+        friend class DoubleLinkedList<T>;
     };
 
     explicit DoubleLinkedList(std::pmr::memory_resource* mr = std::pmr::get_default_resource());
     ~DoubleLinkedList();
 
-    void push_front(const T& value);
-    void push_back(const T& value);
-    void pop_front();
-    void pop_back();
+    void push(const Iterator& it, const T& value);
+    void pop(const Iterator& it);
     
     Iterator begin();
     Iterator end();

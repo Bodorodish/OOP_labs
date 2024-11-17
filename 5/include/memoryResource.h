@@ -7,10 +7,19 @@
 
 class FixedBlockMemoryResource : public std::pmr::memory_resource {
 private:
-    size_t blockSize_;
-    size_t allocated_ = 0;
-    void* memory_;
-    std::list<std::pair<void*, size_t>> allocations_;
+    struct Block {
+        void* ptr;  // Указатель на начало блока
+        size_t size;  // Размер блока
+
+        Block(void* p, size_t s) : ptr(p), size(s) {}
+    };
+
+    size_t blockSize_;  // Общий размер памяти
+    void* memory_;      // Указатель на начало выделенной памяти
+    std::list<Block> freeBlocks_;  // Список свободных блоков
+    std::list<std::pair<void*, size_t>> allocations_;  // Список выделенных блоков
+
+    void mergeFreeBlocks();  // Метод для слияния соседних свободных блоков
 
 public:
     explicit FixedBlockMemoryResource(size_t blockSize);

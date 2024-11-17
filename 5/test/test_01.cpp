@@ -9,13 +9,13 @@ struct TestType {
     std::string name;
 };
 
-TEST(DoubleLinkedListTest, PushFrontBack) {
+TEST(DoubleLinkedListTest, PushUsingIterator) {
     FixedBlockMemoryResource memoryResource(1024);
     DoubleLinkedList<int> list(&memoryResource);
 
-    list.push_front(1);
-    list.push_back(2);
-    list.push_front(0);
+    list.push(list.begin(), 1);  // Вставка в начало
+    list.push(list.begin(), 0);  // Перед текущим началом
+    list.push(list.end(), 2);    // Вставка в конец
 
     auto it = list.begin();
     EXPECT_EQ(*it++, 0);
@@ -24,24 +24,26 @@ TEST(DoubleLinkedListTest, PushFrontBack) {
     EXPECT_EQ(it, list.end());
 }
 
-TEST(DoubleLinkedListTest, PopFront) {
+TEST(DoubleLinkedListTest, PopUsingIterator) {
     FixedBlockMemoryResource memoryResource(1024);
     DoubleLinkedList<int> list(&memoryResource);
 
-    list.push_front(1);
-    list.push_front(2);
-    list.pop_front();
+    list.push(list.begin(), 1);
+    list.push(list.begin(), 2);
+    list.push(list.begin(), 3);
 
-    EXPECT_EQ(*list.begin(), 1);
+    list.pop(list.begin());
+
+    EXPECT_EQ(*list.begin(), 2);
     EXPECT_EQ(++list.begin(), list.end());
 }
 
-TEST(DoubleLinkedListTest, ComplexType) {
+TEST(DoubleLinkedListTest, ComplexTypeWithIterator) {
     FixedBlockMemoryResource memoryResource(1024);
     DoubleLinkedList<TestType> list(&memoryResource);
 
-    list.push_back({1, "first"});
-    list.push_front({0, "zero"});
+    list.push(list.end(), {1, "first"});
+    list.push(list.begin(), {0, "zero"});
 
     auto it = list.begin();
     EXPECT_EQ(it->id, 0);
@@ -49,13 +51,13 @@ TEST(DoubleLinkedListTest, ComplexType) {
     EXPECT_EQ(it->name, "first");
 }
 
-TEST(DoubleLinkedListTest, IteratorTest) {
+TEST(DoubleLinkedListTest, IteratorTraversal) {
     FixedBlockMemoryResource memoryResource(1024);
     DoubleLinkedList<int> list(&memoryResource);
 
-    list.push_front(1);
-    list.push_front(2);
-    list.push_back(3);
+    list.push(list.begin(), 1);
+    list.push(list.begin(), 2);
+    list.push(list.end(), 3);
 
     std::vector<int> result;
     for (auto it = list.begin(); it != list.end(); ++it) {

@@ -15,7 +15,9 @@ T* DoubleLinkedList<T>::Iterator::operator->() {
 
 template <typename T>
 typename DoubleLinkedList<T>::Iterator& DoubleLinkedList<T>::Iterator::operator++() {
-    current_ = current_->next;
+    if (current_) {
+        current_ = current_->next;
+    }
     return *this;
 }
 
@@ -28,7 +30,9 @@ typename DoubleLinkedList<T>::Iterator DoubleLinkedList<T>::Iterator::operator++
 
 template <typename T>
 typename DoubleLinkedList<T>::Iterator& DoubleLinkedList<T>::Iterator::operator--() {
-    current_ = current_->prev;
+    if (current_) {
+        current_ = current_->prev;
+    }
     return *this;
 }
 
@@ -65,63 +69,52 @@ DoubleLinkedList<T>::~DoubleLinkedList() {
 }
 
 template <typename T>
-void DoubleLinkedList<T>::push_front(const T& value) {
+void DoubleLinkedList<T>::push(const Iterator& it, const T& value) {
     Node* newNode = allocator_.allocate(1);
-    new(newNode) Node{value, head_, nullptr};  // Конструируем узел на выделенной памяти
-    if (head_) {
-        head_->prev = newNode;
-    } else {
+    new(newNode) Node{value, it.current_, nullptr}; // Создаём новый узел
+
+    if (!it.current_) { // Если итератор указывает на конец
+        if (tail_) {
+            tail_->next = newNode;
+        } else {
+            head_ = newNode;
+        }
+        newNode->prev = tail_;
         tail_ = newNode;
+    } else {
+        newNode->prev = it.current_->prev;
+        newNode->next = it.current_;
+        if (it.current_->prev) {
+            it.current_->prev->next = newNode;
+        } else {
+            head_ = newNode;
+        }
+        it.current_->prev = newNode;
     }
-    head_ = newNode;
 }
 
 template <typename T>
-void DoubleLinkedList<T>::push_back(const T& value) {
-    Node* newNode = allocator_.allocate(1);
-    new(newNode) Node{value, nullptr, tail_};  // Конструируем узел на выделенной памяти
-    if (tail_) {
-        tail_->next = newNode;
+void DoubleLinkedList<T>::pop(const Iterator& it) {
+    if (!it.current_) {
+        throw std::out_of_range("Invalid iterator");
+    }
+
+    Node* nodeToDelete = it.current_;
+
+    if (nodeToDelete->prev) {
+        nodeToDelete->prev->next = nodeToDelete->next;
     } else {
-        head_ = newNode;
-    }
-    tail_ = newNode;
-}
-
-template <typename T>
-void DoubleLinkedList<T>::pop_front(){
-    if (!head_) {
-        throw std::out_of_range("List is empty");
+        head_ = nodeToDelete->next;
     }
 
-    Node* temp = head_;
-    head_ = head_->next;
-    if (head_) {
-        head_->prev = nullptr;
+    if (nodeToDelete->next) {
+        nodeToDelete->next->prev = nodeToDelete->prev;
     } else {
-        tail_ = nullptr;
+        tail_ = nodeToDelete->prev;
     }
 
-    temp->~Node();                // Вызываем деструктор явно
-    allocator_.deallocate(temp, 1);  // Освобождаем один элемент
-}
-
-template <typename T>
-void DoubleLinkedList<T>::pop_back(){
-    if (!tail_) {
-        throw std::out_of_range("List is empty");
-    }
-
-    Node* temp = tail_;
-    tail_ = tail_->prev;
-    if (tail_) {
-        tail_->next = nullptr;
-    } else {
-        head_ = nullptr;
-    }
-
-    temp->~Node();                // Вызываем деструктор явно
-    allocator_.deallocate(temp, 1);  // Освобождаем один элемент
+    nodeToDelete->~Node();
+    allocator_.deallocate(nodeToDelete, 1);
 }
 
 template <typename T>
@@ -134,5 +127,4 @@ typename DoubleLinkedList<T>::Iterator DoubleLinkedList<T>::end() {
     return Iterator(nullptr);
 }
 
-// Эксплицитные инстанцирования
 template class DoubleLinkedList<int>;
